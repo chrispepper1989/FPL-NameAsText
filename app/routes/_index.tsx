@@ -10,11 +10,12 @@ export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const teamId = url.searchParams.get('teamId');
 
-
-
+  // get the  bulk of the API data from the generic "bootstrap" api
+  // this has all the player names GW information, its a huge payload!
   const bootstrapResponse = await fetch('https://fantasy.premierleague.com/api/bootstrap-static/', requestOptions);
   const bootstrapData: BootstrapData = await bootstrapResponse.json();
 
+  //figure out current gameweek to use in the next fetch
   let currentWeek = 1;
   bootstrapData.events.forEach((element) => {
     if (element.finished) {
@@ -22,9 +23,11 @@ export const loader: LoaderFunction = async ({ request }) => {
     }
   });
 
+  // OK get the actual player names now
   let playerNames = '';
   if (teamId && currentWeek) {
     const cleanTeamId = teamId.replace(/[^0-9]/g, '');
+    // grab the team 
     const teamPicksResponse = await fetch(
       `https://fantasy.premierleague.com/api/entry/${cleanTeamId}/event/${currentWeek}/picks/`,
       requestOptions
@@ -39,6 +42,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     console.log(teamPicks)
     const playersByType: { [key: number]: string[] } = {};
 
+    // group all the players into rows, and tweak their names, ready to create the text output
     teamPicks.picks.forEach((pick) => {
       const player = bootstrapData.elements.find((p) => p.id === pick.element);
       if (player) {
@@ -58,7 +62,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         playersByType[player.element_type].push(name);
       }
     });
-
+     // create the text output!
     Object.keys(playersByType).forEach((type) => {
       playerNames += `| ${playersByType[parseInt(type)].join(', ')} |\n`;
     });
@@ -78,7 +82,7 @@ export default function Index() {
    const [searchParams, setSearchParams] = useSearchParams();
 
    
-
+  //use effects to handle grabbing stuff from the URL
   useEffect(() => {
     const urlTeamId = searchParams.get('teamId');
     
@@ -96,8 +100,9 @@ export default function Index() {
       }
 
   }, [success])
+  // ------------------------------------------
 
-
+  // functions actually used in the HTML
   const handleTeamIdChange = (teamIdUnValidated:string) =>
   {
     const teamId = teamIdUnValidated.trim().replace(/[^0-9]/g, '');
@@ -115,8 +120,6 @@ export default function Index() {
   }
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null)
-
-
 
   const handleCopyToClipboard = async  () => {
 
@@ -146,6 +149,9 @@ export default function Index() {
     }
     
   };
+  //-------------------------------------
+
+  // The actual HTML
 
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
