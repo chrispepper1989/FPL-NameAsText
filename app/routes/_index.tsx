@@ -2,41 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { requestOptions } from './headers';
 import { useLoaderData, useSearchParams } from '@remix-run/react';
 import { LoaderFunction } from '@vercel/remix';
+import { BootstrapData, TeamPicks, LoaderData } from './types';
 
-// Define TypeScript interfaces for the API responses
-interface Event {
-  id: number;
-  finished: boolean;
-}
 
-interface Element {
-  id: number;
-  web_name: string;
-  element_type: number;
-  
-}
-
-interface BootstrapData {
-  events: Event[];
-  elements: Element[];
-}
-
-interface Pick {
-  element: number;
-  is_captain:boolean;
-  is_vice_captain:boolean;
-}
-
-interface TeamPicks {
-  picks: Pick[];
-}
-
-interface LoaderData {
-  gameweek: number | null;
-  playerNames: string;
-  success:boolean;
-}
-
+/*Loader function AKA "the backend" */
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const teamId = url.searchParams.get('teamId');
@@ -102,6 +71,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   };
 };
 
+/* the index page, AKA "the front end"*/
 export default function Index() {
   const { gameweek, playerNames, success } = useLoaderData<LoaderData>();
   const [teamId, setTeamId] = useState<string>('');
